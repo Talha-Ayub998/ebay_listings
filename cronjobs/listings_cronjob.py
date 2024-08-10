@@ -46,7 +46,7 @@ def create_bulk_items_trading_api():
 
     # Fetch items from the database
     items = Item.objects.filter(
-        Q(status='not listed') | Q(status='error'))[:25000]
+        Q(status='not listed') | Q(status='error'))[:12500]
 
     if not items.exists():
         logger.info("No items found to list.")

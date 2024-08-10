@@ -35,7 +35,7 @@ runame = os.getenv('RUNAME')
 
 def update_listed_items():
     # Fetch items with status 'listed'
-    listed_items = list(Item.objects.filter(status='listed'))[:20000]
+    listed_items = list(Item.objects.filter(status='listed'))[:10000]
     logger.info(f"Found {len(listed_items)} items with status 'listed'.")
 
     if not listed_items:
