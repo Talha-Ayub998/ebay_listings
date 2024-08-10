@@ -163,7 +163,7 @@ def get_user_access_and_refresh_token(encoded_credentials, code, redirect_uri):
     Returns:
         tuple: A tuple containing the access token and refresh token if the request is successful, otherwise None.
     """
-    token_url = "https://api.sandbox.ebay.com/identity/v1/oauth2/token"
+    token_url = f"https://{os.getenv('BASE_URL')}/identity/v1/oauth2/token"
     headers = {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Authorization': f'Basic {encoded_credentials}'

@@ -57,7 +57,7 @@ def update_listed_items():
         try:
             # Initialize eBay Trading API connection
             api = Trading(appid=appid, certid=certid, devid=devid,
-                          token=access_token, domain='api.sandbox.ebay.com', config_file=None)
+                          token=access_token, domain={os.getenv('BASE_URL')}, config_file=None)
 
             # Send the request to update the items in bulk
             response = api.execute(

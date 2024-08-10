@@ -209,7 +209,7 @@ def create_bulk_items_trading_api():
         logger.debug(pretty_xml)
 
         # URL for the eBay Trading API
-        url = 'https://api.sandbox.ebay.com/ws/api.dll'
+        url = f'https://{os.getenv('BASE_URL')}/ws/api.dll'
 
         # Make the POST request
         response = requests.post(url, headers=headers, data=xml_body)
