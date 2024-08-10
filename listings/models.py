@@ -1,3 +1,4 @@
+import hashlib
 from django.db import models
 
 
@@ -50,3 +51,18 @@ class APIToken(models.Model):
 
     def __str__(self):
         return f"Token type: {self.token_type} (Created at: {self.created_at})"
+
+class S3File(models.Model):
+    name = models.CharField(max_length=255)
+    file_hash = models.CharField(max_length=64, unique=True)
+    upload_time = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+    @staticmethod
+    def generate_file_hash(file_content):
+        """Generate a SHA-256 hash for the file content."""
+        sha256 = hashlib.sha256()
+        sha256.update(file_content)
+        return sha256.hexdigest()

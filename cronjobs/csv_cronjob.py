@@ -1,3 +1,4 @@
+import hashlib
 import django
 import os
 import sys
@@ -14,10 +15,9 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE',
 
 django.setup()
 
-import os
 import pandas as pd
 from django.db import transaction
-from listings.models import Item
+from listings.models import *
 from helpers.s3 import S3Service
 
 
@@ -127,19 +127,40 @@ def save_csv_to_db(csv_file, chunk_size=10000, batch_size=1000):
         print(row, e)
 
 
+def generate_file_hash(file_path):
+    """Generate a SHA-256 hash for the file content."""
+    sha256 = hashlib.sha256()
+    with open(file_path, 'rb') as f:
+        while chunk := f.read(8192):
+            sha256.update(chunk)
+    return sha256.hexdigest()
+
+
 def main():
     local_xlsx_file = "/tmp/latest_file.xlsx"
     local_csv_file = "/tmp/latest_file.csv"
 
     # Get the latest file name from S3
-    latest_file = s3_client.get_latest_file(bucket_name)
+    latest_file_key = s3_client.get_latest_file(bucket_name)
+    latest_file_name = latest_file_key.split('/')[-1]
+
+    s3_client.download_from_s3(latest_file_key, bucket_name, local_xlsx_file)
     # Download the latest xlsx file from S3
-    s3_client.download_from_s3(latest_file, bucket_name, local_xlsx_file)
+
+    # Generate the hash for the downloaded file
+    file_hash = generate_file_hash(local_xlsx_file)
+
+    # Check if the file already exists in the database
+    if S3File.objects.filter(file_hash=file_hash).exists():
+        print("File already processed. Skipping.")
+        os.remove(local_xlsx_file)  # Clean up the local XLSX file
+        return
 
     # Convert the xlsx file to csv
     xlsx_to_csv(local_xlsx_file, local_csv_file)
 
-    # Process the csv file
+    # Save the file metadata to the database
+    S3File.objects.create(name=latest_file_name, file_hash=file_hash)
     save_csv_to_db(local_csv_file)
     # Clean up local files
     os.remove(local_xlsx_file)
