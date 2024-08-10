@@ -35,7 +35,7 @@ def create_bulk_items_trading_api():
     """
     Creates or replaces inventory items in bulk based on data from the database using the eBay Trading API.
     """
-    access_token = check_access_token(None)
+    access_token = check_access_token()
 
     headers = {
         "Content-Type": "text/xml",

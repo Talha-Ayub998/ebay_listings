@@ -32,15 +32,16 @@ appid = os.getenv('CLIENT_ID')
 certid = os.getenv('CLIENT_SECRET')
 devid = os.getenv('DEV_ID')
 runame = os.getenv('RUNAME')
-access_token = check_access_token(None)
-# access_token = APIToken.objects.last().access_token
-
 
 def update_listed_items():
     # Fetch items with status 'listed'
     listed_items = list(Item.objects.filter(status='listed'))[:20000]
     logger.info(f"Found {len(listed_items)} items with status 'listed'.")
 
+    if not listed_items:
+        return
+
+    access_token = check_access_token()
     # Split the items into chunks of 4
     for i in range(0, len(listed_items), 4):
         chunk = listed_items[i:i + 4]
