@@ -1,11 +1,25 @@
+import django
+import os
+import sys
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Add the project directory to sys.path
+sys.path.append(os.getenv('DJANGO_PROJECT_PATH'))
+
+# Set the Django settings module
+os.environ.setdefault('DJANGO_SETTINGS_MODULE',
+                      os.getenv('DJANGO_SETTINGS_MODULE'))
+
+django.setup()
+
 import os
 import pandas as pd
 from django.db import transaction
 from listings.models import Item
 from helpers.s3 import S3Service
-from dotenv import load_dotenv
 
-load_dotenv()
 
 bucket_name = os.getenv('S3_BUCKET')
 s3_client = S3Service(
