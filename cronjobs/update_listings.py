@@ -68,7 +68,7 @@ def update_listed_items():
                 for item in chunk:
                     item.status = 'updated'
                     item.save()
-                logger.info(f"Successfully updated {len(chunk)} items.")
+                logger.info(f"Successfully updated {chunk}")
             else:
                 logger.error(
                     f"Failed to update items: {response.reply.Errors}")
