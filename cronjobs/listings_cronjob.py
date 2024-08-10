@@ -1,3 +1,20 @@
+import django
+import os
+import sys
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Add the project directory to sys.path
+sys.path.append(os.getenv('DJANGO_PROJECT_PATH'))
+
+# Set the Django settings module
+os.environ.setdefault('DJANGO_SETTINGS_MODULE',
+                      os.getenv('DJANGO_SETTINGS_MODULE'))
+
+django.setup()
+
+
 import xml.etree.ElementTree as ET
 import xml.dom.minidom
 import requests
@@ -8,7 +25,9 @@ from helpers.generate_token import *
 import re
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+# Configure logging
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 
@@ -16,7 +35,7 @@ def create_bulk_items_trading_api():
     """
     Creates or replaces inventory items in bulk based on data from the database using the eBay Trading API.
     """
-    # access_token = check_access_token(None)
+    access_token = check_access_token(None)
 
     headers = {
         "Content-Type": "text/xml",
@@ -175,7 +194,7 @@ def create_bulk_items_trading_api():
                 gallery_type = ET.SubElement(picture_details, 'GalleryType')
                 gallery_type.text = 'Gallery'
                 picture_url = ET.SubElement(picture_details, 'PictureURL')
-                picture_url.text = item.image_url
+                picture_url.text = item.image_url or 'https://e7.pngegg.com/pngimages/325/220/png-clipart-ebay-logo-ebay-online-shopping-amazon-com-sales-ebay-logo-text-logo-thumbnail.png'
 
             except Exception as e:
                 logger.error(f"Error processing item {item.sku}: {e}")
