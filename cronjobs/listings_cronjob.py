@@ -111,7 +111,7 @@ def create_bulk_items_trading_api():
                 quantity.text = '1'
 
                 start_price = ET.SubElement(item_xml, 'StartPrice')
-                start_price.text = item.price
+                start_price.text = str(item.price)
 
                 listing_duration = ET.SubElement(item_xml, 'ListingDuration')
                 listing_duration.text = 'GTC'
