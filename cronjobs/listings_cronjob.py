@@ -108,10 +108,10 @@ def create_bulk_items_trading_api():
                 site.text = 'eBayMotors'
 
                 quantity = ET.SubElement(item_xml, 'Quantity')
-                quantity.text = '0'
+                quantity.text = '1'
 
                 start_price = ET.SubElement(item_xml, 'StartPrice')
-                start_price.text = '1.0'
+                start_price.text = item.price
 
                 listing_duration = ET.SubElement(item_xml, 'ListingDuration')
                 listing_duration.text = 'GTC'
