@@ -45,8 +45,7 @@ def create_bulk_items_trading_api():
     }
 
     # Fetch items from the database
-    items = Item.objects.exclude(stock=0).filter(
-        Q(status='not listed') | Q(status='error'))[:12500]
+    items = Item.objects.filter(Q(status='not listed') | Q(status='error'))[:12500]
 
     if not items.exists():
         logger.info("No items found to list.")
@@ -109,7 +108,7 @@ def create_bulk_items_trading_api():
                 site.text = 'eBayMotors'
 
                 quantity = ET.SubElement(item_xml, 'Quantity')
-                quantity.text = '1'
+                quantity.text = '0'
 
                 start_price = ET.SubElement(item_xml, 'StartPrice')
                 start_price.text = '1.0'
