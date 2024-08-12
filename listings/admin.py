@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Item, APIToken
+from .models import Item, APIToken, S3File
 
 
 @admin.register(Item)
@@ -18,3 +18,11 @@ class APITokenAdmin(admin.ModelAdmin):
     search_fields = ('token_type',)
     ordering = ('-created_at',)
     readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(S3File)
+class S3FileAdmin(admin.ModelAdmin):
+    list_display = ('name', 'file_hash', 'upload_time')
+    search_fields = ('name', 'file_hash')
+    ordering = ('-upload_time',)
+    readonly_fields = ('upload_time',)
