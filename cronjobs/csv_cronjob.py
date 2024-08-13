@@ -89,40 +89,67 @@ def save_csv_to_db(csv_file, chunk_size=10000, batch_size=1000):
         chunk_size (int, optional): Number of rows to read at a time. Defaults to 10000.
         batch_size (int, optional): Number of items to bulk create in each transaction. Defaults to 1000.
     """
-
     try:
         for chunk in pd.read_csv(csv_file, chunksize=chunk_size):
-            items = []
             chunk = preprocess_dataframe(chunk)
+            items_to_create = []
+            items_to_update = []
+            existing_items = {item.sku: item for item in Item.objects.filter(
+                sku__in=chunk['SKU'].tolist())}
+
             for index, row in chunk.iterrows():
-                item = Item(
-                    sku=str(row.get('SKU', '')),
-                    brand=str(row.get('BRAND', '')),
-                    part_name=str(row.get('PART_NAME', '')),
-                    partslink=str(row.get('PARTSLINK', '')),
-                    oem_number=str(row.get('OEM_NUMBER', '')),
-                    price=float(row.get('B2B_PRICE15', 0.0)),
-                    shipping_revenue18=float(
-                        row.get('SHIPPINGREVENUE18', 0.0)),
-                    handling_revenue18=float(
-                        row.get('HANDLINGREVENUE18', 0.0)),
-                    stock_va=int(float(row.get('STOCK_VA', 0))),
-                    stock_il=int(float(row.get('STOCK_IL', 0))),
-                    stock_las1=int(float(row.get('STOCK_LAS1', 0))),
-                    stock_peru=int(float(row.get('STOCK_PERU', 0))),
-                    stock_gpt=int(float(row.get('STOCK_GPT', 0))),
-                    stock_jax=int(float(row.get('STOCK_JAX', 0))),
-                    stock=int(float(row.get('STOCK_TOTAL', 0))),
-                    pdescription=str(row.get('PDESCRIPTION', '')),
-                )
-                items.append(item)
-                if len(items) >= batch_size:
+                sku = str(row.get('SKU', ''))
+                if sku in existing_items:
+                    existing_item = existing_items[sku]
+                    if (existing_item.price != float(row.get('B2B_PRICE15', 0.0)) or existing_item.stock != int(float(row.get('STOCK_TOTAL', 0)))):
+                        existing_item.price = float(row.get('B2B_PRICE15', 0.0))
+                        existing_item.stock = int(float(row.get('STOCK_TOTAL', 0)))
+                        if existing_item.status == 'updated':
+                            existing_item.status = 'listed'
+                        items_to_update.append(existing_item)
+                else:
+                    item = Item(
+                        sku=sku,
+                        brand=str(row.get('BRAND', '')),
+                        part_name=str(row.get('PART_NAME', '')),
+                        partslink=str(row.get('PARTSLINK', '')),
+                        oem_number=str(row.get('OEM_NUMBER', '')),
+                        price=float(row.get('B2B_PRICE15', 0.0)),
+                        shipping_revenue18=float(
+                            row.get('SHIPPINGREVENUE18', 0.0)),
+                        handling_revenue18=float(
+                            row.get('HANDLINGREVENUE18', 0.0)),
+                        stock_va=int(float(row.get('STOCK_VA', 0))),
+                        stock_il=int(float(row.get('STOCK_IL', 0))),
+                        stock_las1=int(float(row.get('STOCK_LAS1', 0))),
+                        stock_peru=int(float(row.get('STOCK_PERU', 0))),
+                        stock_gpt=int(float(row.get('STOCK_GPT', 0))),
+                        stock_jax=int(float(row.get('STOCK_JAX', 0))),
+                        stock=int(float(row.get('STOCK_TOTAL', 0))),
+                        pdescription=str(row.get('PDESCRIPTION', '')),
+                    )
+                    items_to_create.append(item)
+                if len(items_to_create) >= batch_size:
                     with transaction.atomic():
-                        Item.objects.bulk_create(items, ignore_conflicts=True)
-                    items = []
-            if items:
+                        Item.objects.bulk_create(
+                            items_to_create, ignore_conflicts=True)
+                    items_to_create = []
+                if len(items_to_update) >= batch_size:
+                    with transaction.atomic():
+                        Item.objects.bulk_update(
+                            items_to_update, ['price', 'stock', 'status'])
+                    items_to_update = []
+
+            if items_to_create:
                 with transaction.atomic():
-                    Item.objects.bulk_create(items, ignore_conflicts=True)
+                    Item.objects.bulk_create(
+                        items_to_create, ignore_conflicts=True)
+
+            if items_to_update:
+                with transaction.atomic():
+                    Item.objects.bulk_update(
+                        items_to_update, ['price', 'stock', 'status'])
+
     except Exception as e:
         print(row, e)
 
@@ -137,34 +164,42 @@ def generate_file_hash(file_path):
 
 
 def main():
-    local_xlsx_file = "/tmp/latest_file.xlsx"
-    local_csv_file = "/tmp/latest_file.csv"
+    local_xlsx_file_template = "/tmp/{}_latest_file.xlsx"
+    local_csv_file_template = "/tmp/{}_latest_file.csv"
 
-    # Get the latest file name from S3
-    latest_file_key = s3_client.get_latest_file(bucket_name)
-    latest_file_name = latest_file_key.split('/')[-1]
-
-    s3_client.download_from_s3(latest_file_key, bucket_name, local_xlsx_file)
-    # Download the latest xlsx file from S3
-
-    # Generate the hash for the downloaded file
-    file_hash = generate_file_hash(local_xlsx_file)
-
-    # Check if the file already exists in the database
-    if S3File.objects.filter(file_hash=file_hash).exists():
-        print("File already processed. Skipping.")
-        os.remove(local_xlsx_file)  # Clean up the local XLSX file
+    # Get the latest file names from S3
+    latest_file_keys = s3_client.get_previous_day_files(bucket_name)
+    if not latest_file_keys:
         return
 
-    # Convert the xlsx file to csv
-    xlsx_to_csv(local_xlsx_file, local_csv_file)
+    for latest_file_key in latest_file_keys:
+        latest_file_name = latest_file_key.split('/')[-1]
+        local_xlsx_file = local_xlsx_file_template.format(latest_file_name)
+        local_csv_file = local_csv_file_template.format(latest_file_name)
 
-    # Save the file metadata to the database
-    S3File.objects.create(name=latest_file_name, file_hash=file_hash)
-    save_csv_to_db(local_csv_file)
-    # Clean up local files
-    os.remove(local_xlsx_file)
-    os.remove(local_csv_file)
+        # Download the latest xlsx file from S3
+        s3_client.download_from_s3(
+            latest_file_key, bucket_name, local_xlsx_file)
+
+        # Generate the hash for the downloaded file
+        file_hash = generate_file_hash(local_xlsx_file)
+
+        # Check if the file already exists in the database
+        if S3File.objects.filter(file_hash=file_hash).exists():
+            print(f"File {latest_file_name} already processed. Skipping.")
+            os.remove(local_xlsx_file)  # Clean up the local XLSX file
+            continue
+
+        # Convert the xlsx file to csv
+        xlsx_to_csv(local_xlsx_file, local_csv_file)
+
+        # Save the file metadata to the database
+        S3File.objects.create(name=latest_file_name, file_hash=file_hash)
+        save_csv_to_db(local_csv_file)
+
+        # Clean up local files
+        os.remove(local_xlsx_file)
+        os.remove(local_csv_file)
 
 
 if __name__ == "__main__":

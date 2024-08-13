@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import boto3
 
 
@@ -18,14 +19,29 @@ class S3Service:
             raise Exception(
                 f"Failed to download {s3_file} from {s3_bucket}: {e}")
 
-    def get_latest_file(self, s3_bucket):
+    def get_previous_day_files(self, s3_bucket):
         try:
             bucket = self.s3.Bucket(s3_bucket)
-            # Filter out folders (objects whose keys end with '/')
+            # Filter out folders (objects whose keys end with '/') and files that do not end with .xlsx
             files = [obj for obj in bucket.objects.all()
-                     if not obj.key.endswith('/')]
-            latest_file = max(files, key=lambda x: x.last_modified)
-            return latest_file.key
+                    if not obj.key.endswith('/') and obj.key.endswith('.xlsx')]
+
+            # Get the current date and the date for the previous day
+            current_date = datetime.now().date()
+            previous_day = current_date - timedelta(days=1)
+
+            # Filter files to include only those from the previous day
+            previous_day_files = [
+                obj for obj in files
+                if obj.last_modified.date() == previous_day
+            ]
+
+            if not previous_day_files:
+                raise Exception(
+                    f"No files from the previous day found in {s3_bucket}")
+
+            return [file.key for file in previous_day_files]
+
         except Exception as e:
             raise Exception(
-                f"Failed to get the latest file from {s3_bucket}: {e}")
+                f"Failed to get the previous day files from {s3_bucket}: {e}")
