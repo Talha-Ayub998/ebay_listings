@@ -1,3 +1,4 @@
+from decimal import Decimal
 import django
 import os
 import sys
@@ -13,8 +14,6 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE',
                       os.getenv('DJANGO_SETTINGS_MODULE'))
 
 django.setup()
-
-
 import xml.etree.ElementTree as ET
 import xml.dom.minidom
 import requests
@@ -99,7 +98,7 @@ def create_bulk_items_trading_api():
 
                 primary_category = ET.SubElement(item_xml, 'PrimaryCategory')
                 category_id = ET.SubElement(primary_category, 'CategoryID')
-                category_id.text = '6755'
+                category_id.text = item.category_id or '6755'
 
                 category_mapping_allowed = ET.SubElement(
                     item_xml, 'CategoryMappingAllowed')
@@ -112,7 +111,7 @@ def create_bulk_items_trading_api():
                 quantity.text = '1'
 
                 start_price = ET.SubElement(item_xml, 'StartPrice')
-                start_price.text = str(item.price * 1.2)
+                start_price.text = str(item.price * Decimal('1.2'))
 
                 listing_duration = ET.SubElement(item_xml, 'ListingDuration')
                 listing_duration.text = 'GTC'
@@ -199,7 +198,7 @@ def create_bulk_items_trading_api():
                 gallery_type = ET.SubElement(picture_details, 'GalleryType')
                 gallery_type.text = 'Gallery'
                 picture_url = ET.SubElement(picture_details, 'PictureURL')
-                picture_url.text = item.image_url or 'https://e7.pngegg.com/pngimages/325/220/png-clipart-ebay-logo-ebay-online-shopping-amazon-com-sales-ebay-logo-text-logo-thumbnail.png'
+                picture_url.text = item.image_url or 'https://ir.ebaystatic.com/cr/v/c1/rsc/ebay_logo_512.png'
 
             except Exception as e:
                 logger.error(f"Error processing item {item.sku}: {e}")

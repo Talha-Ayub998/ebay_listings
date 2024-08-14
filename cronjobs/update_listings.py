@@ -1,4 +1,5 @@
 
+from decimal import Decimal
 import django
 import os
 import sys
@@ -14,7 +15,6 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE',
                       os.getenv('DJANGO_SETTINGS_MODULE'))
 
 django.setup()
-
 
 
 from ebaysdk.trading import Connection as Trading
@@ -51,7 +51,7 @@ def update_listed_items():
             inventory_status_payload['InventoryStatus'].append({
                 'ItemID': item.item_id,
                 'Quantity': item.stock,
-                'StartPrice': (item.price * 1.2),
+                'StartPrice': (item.price * Decimal('1.2')),
             })
 
         try:

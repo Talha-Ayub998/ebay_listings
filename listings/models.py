@@ -17,6 +17,7 @@ class Item(models.Model):
     part_name = models.CharField(max_length=255)
     partslink = models.CharField(max_length=255, blank=True, null=True)
     oem_number = models.CharField(max_length=255, blank=True, null=True)
+    category_id = models.CharField(max_length=255, blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     shipping_revenue18 = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True)

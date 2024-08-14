@@ -114,6 +114,7 @@ def save_csv_to_db(csv_file, chunk_size=10000, batch_size=1000):
                         part_name=str(row.get('PART_NAME', '')),
                         partslink=str(row.get('PARTSLINK', '')),
                         oem_number=str(row.get('OEM_NUMBER', '')),
+                        category_id=str(row.get('CATEGORY_ID', '')),
                         price=float(row.get('B2B_PRICE15', 0.0)),
                         shipping_revenue18=float(
                             row.get('SHIPPINGREVENUE18', 0.0)),
