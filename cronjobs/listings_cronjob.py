@@ -22,6 +22,7 @@ import logging
 from django.db.models import Q
 from listings.models import *
 from helpers.generate_token import *
+from cronjobs.update_listings import *
 import re
 
 # Configure logging
@@ -45,7 +46,7 @@ def create_bulk_items_trading_api():
     }
 
     # Fetch items from the database
-    items = Item.objects.exclude(stock=0).filter(Q(status='not listed') | Q(status='error'))[:12500]
+    items = Item.objects.exclude(stock=0).filter(Q(status='not listed') | Q(status='error'))[:25000]
 
     if not items.exists():
         logger.info("No items found to list.")
@@ -262,6 +263,7 @@ def create_bulk_items_trading_api():
 
 if __name__ == "__main__":
     create_bulk_items_trading_api()
+    update_listed_items()
 
 
 # <ItemSpecifics >
