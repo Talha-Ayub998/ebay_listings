@@ -51,7 +51,7 @@ def update_listed_items():
             inventory_status_payload['InventoryStatus'].append({
                 'ItemID': item.item_id,
                 'Quantity': item.stock,
-                'StartPrice': item.price,
+                'StartPrice': (item.price * 1.2),
             })
 
         try:
