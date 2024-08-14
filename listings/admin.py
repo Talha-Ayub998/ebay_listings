@@ -4,9 +4,9 @@ from .models import Item, APIToken, S3File
 
 @admin.register(Item)
 class ItemAdmin(admin.ModelAdmin):
-    list_display = ('sku', 'brand', 'part_name',
+    list_display = ('sku', 'brand', 'item_id',
                     'status', 'stock', 'updated_at')
-    search_fields = ('sku', 'brand', 'part_name')
+    search_fields = ('sku', 'brand', 'item_id')
     list_filter = ('status', 'brand', 'created_at')
     ordering = ('-updated_at',)
     readonly_fields = ('created_at', 'updated_at')
