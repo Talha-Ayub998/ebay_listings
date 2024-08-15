@@ -262,6 +262,7 @@ def create_bulk_items_trading_api():
 
 if __name__ == "__main__":
     create_bulk_items_trading_api()
+    logger.info("Going to update the listed items")
     update_listed_items()
 
 

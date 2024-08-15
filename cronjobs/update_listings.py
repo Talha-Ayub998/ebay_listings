@@ -39,6 +39,7 @@ def update_listed_items():
     logger.info(f"Found {len(listed_items)} items with status 'listed'.")
 
     if not listed_items:
+        logger.info("No items found to update.")
         return
 
     access_token = check_access_token()
@@ -65,7 +66,7 @@ def update_listed_items():
             logger.info(f"API response: {response.reply.Ack}")
 
             # Check if the update was successful
-            if response.reply.Ack == 'Success':
+            if response.reply.Ack == 'Success' or response.reply.Ack == 'Warning':
                 for item in chunk:
                     item.status = 'updated'
                     item.save()

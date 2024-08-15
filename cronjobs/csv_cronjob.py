@@ -1,3 +1,4 @@
+import logging
 import hashlib
 import django
 import os
@@ -28,6 +29,9 @@ s3_client = S3Service(
     aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY')
 )
 
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 def xlsx_to_csv(xlsx_file, csv_file):
     """
@@ -96,17 +100,21 @@ def save_csv_to_db(csv_file, chunk_size=10000, batch_size=1000):
             items_to_update = []
             existing_items = {item.sku: item for item in Item.objects.filter(
                 sku__in=chunk['SKU'].tolist())}
+            logger.info(
+                f"Found {existing_items} existing items.")
 
             for index, row in chunk.iterrows():
                 sku = str(row.get('SKU', ''))
                 if sku in existing_items:
                     existing_item = existing_items[sku]
-                    if (existing_item.price != float(row.get('B2B_PRICE15', 0.0)) or existing_item.stock != int(float(row.get('STOCK_TOTAL', 0)))):
+                    if (float(existing_item.price) != float(row.get('B2B_PRICE15', 0.0)) or int(existing_item.stock) != int(float(row.get('STOCK_TOTAL', 0)))):
                         existing_item.price = float(row.get('B2B_PRICE15', 0.0))
                         existing_item.stock = int(float(row.get('STOCK_TOTAL', 0)))
                         if existing_item.status == 'updated':
                             existing_item.status = 'listed'
                         items_to_update.append(existing_item)
+                        logger.info(
+                            f"Going to update {len(items_to_update)} existing items.")
                 else:
                     item = Item(
                         sku=sku,
