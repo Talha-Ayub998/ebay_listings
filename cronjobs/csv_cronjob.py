@@ -113,8 +113,6 @@ def save_csv_to_db(csv_file, chunk_size=10000, batch_size=1000):
                         if existing_item.status == 'updated':
                             existing_item.status = 'listed'
                         items_to_update.append(existing_item)
-                        logger.info(
-                            f"Going to update {len(items_to_update)} existing items.")
                 else:
                     item = Item(
                         sku=sku,
